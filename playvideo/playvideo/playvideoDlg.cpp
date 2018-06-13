@@ -1,6 +1,7 @@
 
 // playvideoDlg.cpp : 实现文件
 //
+#include <thread>  
 #include <time.h>
 #include "stdafx.h"
 #include "playvideo.h"
@@ -14,7 +15,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-#define DATABASE_NAME "Hat"
+#define DATABASE_NAME "hat"
 #define DATABASE_HOSTNAME "47.101.57.53:3306"
 #define DATABASE_USERNAME "root"
 #define DATABASE_PWD "123456"
@@ -39,11 +40,7 @@ volatile BOOL m_bRun2;
 //boolean b;
 int loop = 0;//记录跟踪帧数
 int num = 0;
-/*cv::Params params;
-params.compressed_size = 1;
-params.desc_pca = cv::TrackerKCF::GRAY;
-params.desc_npca = cv::TrackerKCF::GRAY;
-params.resize = true;*/
+
 using namespace std;
 sql::Driver *driver;
 sql::Connection *con;
@@ -68,18 +65,28 @@ sql::ResultSet  *res;//mysql结果
 
 std::string weights_file = "myyolov3-tiny-person_44000.weights";
 std::string cfg_file = "myyolov3-tiny-person.cfg";
+std::string  names_file = "names.names";
+vector<std::string> obj_names ;
 //std::string cfg_file = "yolov3-tiny.cfg";
 //std::string weights_file = "yolov3-tiny.weights";
 //cv::VideoCapture capture(0);
 //std::string weights_file = "myyolov3-tiny_62600.weights";
 //Detector detector(cfg_file, weights_file); //生成detector
 Detector *detector;
+Tracker_optflow tracker_flow; // init tracker
+
+std::atomic<bool> detection_ready(true);
+//std::thread t;
+cv::Mat det_frame, cur_frame;
+std::vector<bbox_t> result_vec, detect_vec;
+void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std::string> obj_names,
+	int current_det_fps , int current_cap_fps );//画框函数
+
+std::vector<std::string> objects_names_from_file(std::string const filename);
 //std::string weights_file = "myyolov3-p_45000.weights";
 //std::string cfg_file = "myyolov3-p.cfg";
 //cv::Ptr<Tracker> tracker = cv::Tracker::create("MEDIANFLOW");
-cv::Ptr< cv::MultiTracker>  trackers;
-vector<cv::Rect2d> obj;
-vector<cv::Ptr< cv::Tracker > 	>newTracker;
+
 cv::Mat frame;
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 std::vector<bbox_t> boxs;
@@ -203,6 +210,7 @@ BOOL CplayvideoDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 	detector = new Detector(cfg_file, weights_file, 0);
+	obj_names = objects_names_from_file(names_file);
 	// TODO: 在此添加额外的初始化代码
 	pwnd = GetDlgItem(IDC_STATIC1);//访问控件的ID，即可返回该控件的指针
 	//pwnd->MoveWindow(35,30,352,288);
@@ -495,32 +503,12 @@ void CplayvideoDlg::OnTimer(UINT_PTR nIDEvent)
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	IplImage* m_Frame;
 	//m_Frame = cvQueryFrame(capture);
-	capture >> m;
+	capture >> cur_frame;
 	CvvImage m_CvvImage;
-	if (m.data != NULL)
+	if (cur_frame.data != NULL)
 	{	
-		if (num == 0) {
-			//delete(trackers);
-			trackers = cv::MultiTracker::create();
-			boxs = detector->detect(m);
-			for (int i = 0; i < boxs.size(); i++) {
-				obj.clear();
-				obj.push_back(cv::Rect2d(boxs.at(i).x, boxs.at(i).y, boxs.at(i).w, boxs.at(i).h));
-				newTracker.clear();
-				try { newTracker.push_back(cv::TrackerKCF::create()); }
-				catch(cv::Exception e){}
-			}
-			//trackers->add((newTracker, m, obj);
-			//trackers->clear();
-			trackers->add(newTracker, m, obj);
-			num = (num + 1) % 10;//10帧用一次yolo检测
-		}
-		
-		else {
-			trackers->update(m, obj);
-			num = (num + 1) % 30;
 
-		}
+		
 		/*boxs = detector->detect(m);
 		for (int i = 0; i < boxs.size(); i++) {
 			obj.clear();
@@ -531,24 +519,29 @@ void CplayvideoDlg::OnTimer(UINT_PTR nIDEvent)
 		//trackers->add((newTracker, m, obj);
 		//trackers->clear();
 		//trackers->add(newTracker, m, obj);
-		m_numofall = boxs.size();
+		//while (true) {
+			
+
+		if (detection_ready) {
+			detection_ready = false;
+			result_vec = detect_vec;
+			det_frame = cur_frame.clone();
+			AfxBeginThread((AFX_THREADPROC)ThreadFunc3, this);//异步线程
+				//if (t.joinable()) t.join();
+				//t = std::thread([&]() { detect_vec = detector->detect(det_frame, 0.24); detection_ready = true; });
+			tracker_flow.update_tracking_flow(cur_frame, result_vec); // add coords to track
+			}
+
+		result_vec = tracker_flow.tracking_flow(cur_frame, true); // get new tracked coords
+		draw_boxes(cur_frame, result_vec, obj_names, -1, -1);
+			//cv::imshow("window name", current_frame);
+			//int key = cv::waitKey(10);
+		//}
+		m_numofall = result_vec.size();
 		m_numofyes = 0;
 		
-		for (cv::Rect2d o :obj) {
-			//if (boxs.at(j).obj_id == 1)
-			//{
-				m_numofyes++;
-				//cvRectangle(m_Frame, cvPoint(t.x, t.y), cvPoint(t.x + t.w, t.y + t.h), cv::Scalar(0, 0, 255), 5, 1, 0);
-				rectangle(m, o,cv:: Scalar(255, 0, 0), 2, 1);
-			//}
-			//else
-			//{
-				//m_numofyes++;
-				//cvRectangle(m_Frame, cvPoint(t.x, t.y), cvPoint(t.x + t.w, t.y + t.h), cv::Scalar(0, 255, 0), 5, 1, 0);
-				rectangle(m, o,cv:: Scalar(255, 0, 0), 2, 1);
-			//}
-		}
-		IplImage* m_Frame = new IplImage(m);
+		
+		IplImage* m_Frame = new IplImage(cur_frame);
 		m_numofno = m_numofall - m_numofyes;
 		m_CvvImage.CopyOf(m_Frame, 1);
 		if (true)
@@ -909,6 +902,12 @@ void CplayvideoDlg::ThreadFunc2(void *param)
 
 
 }
+
+
+void CplayvideoDlg::ThreadFunc3(void *param) {
+	detect_vec = detector->detect(det_frame, 0.25); 
+	detection_ready = true;
+}
 void CplayvideoDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialogEx::OnSize(nType, cx, cy);
@@ -985,7 +984,7 @@ void CplayvideoDlg::OnSize(UINT nType, int cx, int cy)
 	Invalidate();//更新窗口 
 
 
-
+	
 }
 void CplayvideoDlg::AddPitcure()
 {
@@ -1020,4 +1019,36 @@ void CplayvideoDlg::AddPitcure()
 void CplayvideoDlg::OnStnClickedStatic1()
 {
 	// TODO: 在此添加控件通知处理程序代码
+}
+void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std::string> obj_names,
+	int current_det_fps = -1, int current_cap_fps = -1)
+{
+	int const colors[6][3] = { { 1,0,1 },{ 0,0,1 },{ 0,1,1 },{ 0,1,0 },{ 1,1,0 },{ 1,0,0 } };
+
+	for (auto &i : result_vec) {
+		cv::Scalar color = obj_id_to_color(i.obj_id);
+		cv::rectangle(mat_img, cv::Rect(i.x, i.y, i.w, i.h), color, 2);
+		if (obj_names.size() > i.obj_id) {
+			std::string obj_name = obj_names[i.obj_id];
+			if (i.track_id > 0) obj_name += " - " + std::to_string(i.track_id);
+			cv::Size const text_size = getTextSize(obj_name, cv::FONT_HERSHEY_COMPLEX_SMALL, 1.2, 2, 0);
+			int const max_width = (text_size.width > i.w + 2) ? text_size.width : (i.w + 2);
+			cv::rectangle(mat_img, cv::Point2f(std::max((int)i.x - 1, 0), std::max((int)i.y - 30, 0)),
+				cv::Point2f(std::min((int)i.x + max_width, mat_img.cols - 1), std::min((int)i.y, mat_img.rows - 1)),
+				color, CV_FILLED, 8, 0);
+			putText(mat_img, obj_name, cv::Point2f(i.x, i.y - 10), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.2, cv::Scalar(0, 0, 0), 2);
+		}
+	}
+	if (current_det_fps >= 0 && current_cap_fps >= 0) {
+		std::string fps_str = "FPS detection: " + std::to_string(current_det_fps) + "   FPS capture: " + std::to_string(current_cap_fps);
+		putText(mat_img, fps_str, cv::Point2f(10, 20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.2, cv::Scalar(50, 255, 0), 2);
+	}
+}
+std::vector<std::string> objects_names_from_file(std::string const filename) {
+	std::ifstream file(filename);
+	std::vector<std::string> file_lines;
+	if (!file.is_open()) return file_lines;
+	for (std::string line; getline(file, line);) file_lines.push_back(line);
+	std::cout << "object names loaded \n";
+	return file_lines;
 }

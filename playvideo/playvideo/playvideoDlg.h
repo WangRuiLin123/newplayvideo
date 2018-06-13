@@ -62,6 +62,7 @@ public:
 	CComboBox m_comboWeb;
 	static void ThreadFunc1(void *param);
 	static void ThreadFunc2(void *param);
+	static void ThreadFunc3(void *param);
 	afx_msg void OnEnChangeEdit1();
 	void CplayvideoDlg::OnSize(UINT nType, int cx, int cy);
 	CDateTimeCtrl m_dtCtrl;
