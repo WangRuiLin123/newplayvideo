@@ -1,6 +1,7 @@
 
 // playvideoDlg.cpp : 实现文件
 //
+
 #include <thread>  
 #include <time.h>
 #include "stdafx.h"
@@ -83,6 +84,7 @@ void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std
 	int current_det_fps , int current_cap_fps );//画框函数
 
 std::vector<std::string> objects_names_from_file(std::string const filename);
+void exportMySQLTable(string file);//导出数据
 //std::string weights_file = "myyolov3-p_45000.weights";
 //std::string cfg_file = "myyolov3-p.cfg";
 //cv::Ptr<Tracker> tracker = cv::Tracker::create("MEDIANFLOW");
@@ -613,7 +615,7 @@ void CplayvideoDlg::OnCbnSelchangeCombo1()
 void CplayvideoDlg::OnBnClickedButton6()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	
+	exportMySQLTable("111");
 
 }
 
@@ -841,7 +843,8 @@ void CplayvideoDlg::ThreadFunc2(void *param)
 
 	}*/
 	int indexoftable;
-	res = prep_stmt4->executeQuery();
+	res = prep_stmt4->executeQuery(); 
+	
 	while (res->next())
 	{
 		indexoftable = res->getInt(1);
@@ -1049,6 +1052,48 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 	std::vector<std::string> file_lines;
 	if (!file.is_open()) return file_lines;
 	for (std::string line; getline(file, line);) file_lines.push_back(line);
-	std::cout << "object names loaded \n";
+	//std::cout << "object names loaded \n";
 	return file_lines;
+}
+void exportMySQLTable(string file) 
+{
+	
+	// sql_row;
+
+	int  num;
+	//FILE * output = fopen(file.data, "w+");
+	FILE * output;
+	try { 
+		output = fopen("123.csv", "w+"); 
+	}
+	catch (exception e) {
+		return;
+	}
+	try {
+		sql::ResultSet * res = stm->executeQuery("SELECT * FROM  (n00001);");//query
+	}
+	
+	catch (sql::SQLException e) {
+
+	}
+	/*if (res == NULL)
+		return;*/
+	while (res->next())// get row info
+	{
+		num = res->getMetaData()->getColumnCount();
+		for (int j = 1; j <= num; j++)
+		{
+			
+			fprintf(output, "%s,", res->getString(j));
+		}
+	
+	
+	}
+			
+	
+	
+	
+
+	fclose(output);
+	
 }
