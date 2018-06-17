@@ -63,6 +63,7 @@ public:
 	static void ThreadFunc1(void *param);
 	static void ThreadFunc2(void *param);
 	static void ThreadFunc3(void *param);
+	static void  exportMySQLTable(void *param);
 	afx_msg void OnEnChangeEdit1();
 	void CplayvideoDlg::OnSize(UINT nType, int cx, int cy);
 	CDateTimeCtrl m_dtCtrl;
@@ -82,4 +83,17 @@ public:
 	int m_numofno;
 	afx_msg void OnStnClickedStatic1();
 	CStatic m_ctrlPic;
+	
+	
+	afx_msg void OnBnClickedButton4();
+	CButton m_ctrlRadio1;
+	afx_msg void OnStnClickedStatic5();
+	afx_msg void OnStnClickedStatic13();
+	afx_msg void OnStnClickedStatic4();
+	afx_msg void OnBnClickedRadio1();
+	afx_msg void OnBnClickedRadio2();
+	int m_Radio1;
+	afx_msg void OnStnClickedStatic8();
+	afx_msg void OnEnChangeEdit3();
+	afx_msg void OnLbnSelchangeList2();
 };

@@ -1,5 +1,5 @@
-
-// playvideoDlg.cpp : ÊµÏÖÎÄ¼ş
+ï»¿
+// playvideoDlg.cpp : å®ç°æ–‡ä»¶
 //
 
 #include <thread>  
@@ -20,14 +20,15 @@
 #define DATABASE_HOSTNAME "47.101.57.53:3306"
 #define DATABASE_USERNAME "root"
 #define DATABASE_PWD "123456"
-cv::VideoCapture capture; //ÊÓÆµ»ñÈ¡½á¹¹
+cv::VideoCapture capture; //è§†é¢‘è·å–ç»“æ„
 cv::Mat m ;
-CRect rect;//¾ØĞÎÀàCRectÒ²ÎªÒ»¸öÃ»ÓĞ»ùÀàµÄ¶ÀÁ¢Àà£¬·â×°ÁËRECT½á¹¹£¬ÓĞ³ÉÔ±±äÁ¿left¡¢top¡¢rightºÍbottom
-CDC *pDC;//ÊÓÆµÏÔÊ¾¿Ø¼şÉè±¸ÉÏÏÂÎÄ
-HDC hDC;//ÊÓÆµÏÔÊ¾¿Ø¼şÉè±¸¾ä±ú
+CRect rect;//çŸ©å½¢ç±»CRectä¹Ÿä¸ºä¸€ä¸ªæ²¡æœ‰åŸºç±»çš„ç‹¬ç«‹ç±»ï¼Œå°è£…äº†RECTç»“æ„ï¼Œæœ‰æˆå‘˜å˜é‡leftã€topã€rightå’Œbottom
+CDC *pDC;//è§†é¢‘æ˜¾ç¤ºæ§ä»¶è®¾å¤‡ä¸Šä¸‹æ–‡
+HDC hDC;//è§†é¢‘æ˜¾ç¤ºæ§ä»¶è®¾å¤‡å¥æŸ„
 CWnd *pwnd;
 CString FileName;
-CStatic *pStc;//±êÊ¶Í¼ÏñÏÔÊ¾µÄpicture ¿Ø¼ş
+CString savestrFilePath;//ä¿å­˜æ–‡ä»¶è·¯å¾„
+CStatic *pStc;//æ ‡è¯†å›¾åƒæ˜¾ç¤ºçš„picture æ§ä»¶
 CMyButton m_Btn1;
 CMyButton m_Btn2;
 CMyButton m_Btn3;
@@ -35,34 +36,35 @@ CMyButton m_Btn4;
 CMyButton m_Btn5;
 CMyButton m_Btn6;
 CMyButton m_Btn7;
-//boolean b= connection.connect("°²È«Ã±¼ì²â", "localhost", "zhijian", "123456", 3306);
+//boolean b= connection.connect("å®‰å…¨å¸½æ£€æµ‹", "localhost", "zhijian", "123456", 3306);
 volatile BOOL m_bRun1;
 volatile BOOL m_bRun2;
 //boolean b;
-int loop = 0;//¼ÇÂ¼¸ú×ÙÖ¡Êı
+int loop = 0;//è®°å½•è·Ÿè¸ªå¸§æ•°
 int num = 0;
 
 using namespace std;
 sql::Driver *driver;
 sql::Connection *con;
 sql::Statement *stm;
-
+sql::Statement *stm2;
 sql::PreparedStatement  *prep_stmt1;
-std::string sql1 = "INSERT INTO result (numofall, numofyes, numofno) VALUE (?, ?, ?); ";//ÉãÏñÍ·Ê¶±ğ½á¹û
+std::string sql1 = "INSERT INTO result (numofall, numofyes, numofno) VALUE (?, ?, ?); ";//æ‘„åƒå¤´è¯†åˆ«ç»“æœ
 
 sql::PreparedStatement  *prep_stmt2;
-std::string sql2 = "INSERT IGNORE INTO videos (url) VALUE (?); ";//ÊÓÆµÎÄ¼ş¼ÓÈëvideos±í
+std::string sql2 = "INSERT IGNORE INTO videos (url) VALUE (?); ";//è§†é¢‘æ–‡ä»¶åŠ å…¥videosè¡¨
 
 //sql::PreparedStatement  *prep_stmt3;
-std::string sql3 = "CREATE TABLE If Not Exists '%d' ('time' time NOT NULL,'numofall' smallint(6) NOT NULL DEFAULT '0','numofyes' smallint(6) NOT NULL DEFAULT '0','numofno' smallint(6) NOT NULL DEFAULT '0',PRIMARY KEY('time')) ENGINE = InnoDB DEFAULT CHARSET = utf8";//¸ù¾İÊÓÆµÎÄ¼şµÄindex´´½¨±í
+std::string sql3 = "CREATE TABLE If Not Exists '%d' ('time' time NOT NULL,'numofall' smallint(6) NOT NULL DEFAULT '0','numofyes' smallint(6) NOT NULL DEFAULT '0','numofno' smallint(6) NOT NULL DEFAULT '0',PRIMARY KEY('time')) ENGINE = InnoDB DEFAULT CHARSET = utf8";//æ ¹æ®è§†é¢‘æ–‡ä»¶çš„indexåˆ›å»ºè¡¨
 
 sql::PreparedStatement  *prep_stmt4;
-std::string sql4 = "SELECT indexoftable FROM videos WHERE url= (?); ";//²éÕÒvideosÖĞurl¶ÔÓ¦µÄµÄindexoftable
+std::string sql4 = "SELECT indexoftable FROM videos WHERE url= (?); ";//æŸ¥æ‰¾videosä¸­urlå¯¹åº”çš„çš„indexoftable
 
 //sql::PreparedStatement  *prep_stmt5;
-std::string sql5 = "INSERT IGNORE INTO '%d '(time,numofall, numofyes, numofno) VALUE (%s,%d, %d, %d); ";//ÊÓÆµÎÄ¼şÊ¶±ğ½á¹û
+std::string sql5 = "INSERT IGNORE INTO '%d '(time,numofall, numofyes, numofno) VALUE (%s,%d, %d, %d); ";//è§†é¢‘æ–‡ä»¶è¯†åˆ«ç»“æœ
 
-sql::ResultSet  *res;//mysql½á¹û
+
+sql::ResultSet  *res;//mysqlç»“æœ
 
 std::string weights_file = "myyolov3-tiny-person_44000.weights";
 std::string cfg_file = "myyolov3-tiny-person.cfg";
@@ -72,7 +74,7 @@ vector<std::string> obj_names ;
 //std::string weights_file = "yolov3-tiny.weights";
 //cv::VideoCapture capture(0);
 //std::string weights_file = "myyolov3-tiny_62600.weights";
-//Detector detector(cfg_file, weights_file); //Éú³Édetector
+//Detector detector(cfg_file, weights_file); //ç”Ÿæˆdetector
 Detector *detector;
 Tracker_optflow tracker_flow; // init tracker
 
@@ -81,33 +83,33 @@ std::atomic<bool> detection_ready(true);
 cv::Mat det_frame, cur_frame;
 std::vector<bbox_t> result_vec, detect_vec;
 void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std::string> obj_names,
-	int current_det_fps , int current_cap_fps );//»­¿òº¯Êı
+	int current_det_fps , int current_cap_fps );//ç”»æ¡†å‡½æ•°
 
 std::vector<std::string> objects_names_from_file(std::string const filename);
-void exportMySQLTable(string file);//µ¼³öÊı¾İ
+
 //std::string weights_file = "myyolov3-p_45000.weights";
 //std::string cfg_file = "myyolov3-p.cfg";
 //cv::Ptr<Tracker> tracker = cv::Tracker::create("MEDIANFLOW");
 
 cv::Mat frame;
-// ÓÃÓÚÓ¦ÓÃ³ÌĞò¡°¹ØÓÚ¡±²Ëµ¥ÏîµÄ CAboutDlg ¶Ô»°¿ò
+// ç”¨äºåº”ç”¨ç¨‹åºâ€œå…³äºâ€èœå•é¡¹çš„ CAboutDlg å¯¹è¯æ¡†
 std::vector<bbox_t> boxs;
-// ÓÃÓÚÓ¦ÓÃ³ÌĞò¡°¹ØÓÚ¡±²Ëµ¥ÏîµÄ CAboutDlg ¶Ô»°¿ò
+// ç”¨äºåº”ç”¨ç¨‹åºâ€œå…³äºâ€èœå•é¡¹çš„ CAboutDlg å¯¹è¯æ¡†
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// ¶Ô»°¿òÊı¾İ
+// å¯¹è¯æ¡†æ•°æ®
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV æ”¯æŒ
 
-// ÊµÏÖ
+// å®ç°
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -125,7 +127,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CplayvideoDlg ¶Ô»°¿ò
+// CplayvideoDlg å¯¹è¯æ¡†
 
 
 
@@ -134,6 +136,7 @@ CplayvideoDlg::CplayvideoDlg(CWnd* pParent /*=NULL*/)
 	, m_numofall(0)
 	, m_numofyes(0)
 	, m_numofno(0)
+	, m_Radio1(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 }
@@ -150,6 +153,7 @@ void CplayvideoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC8, m_numofyes);
 	DDX_Text(pDX, IDC_STATIC10, m_numofno);
 	DDX_Control(pDX, IDC_STATIC1, m_ctrlPic);
+	DDX_Radio(pDX, IDC_RADIO1, m_Radio1);
 }
 
 BEGIN_MESSAGE_MAP(CplayvideoDlg, CDialogEx)
@@ -178,18 +182,27 @@ BEGIN_MESSAGE_MAP(CplayvideoDlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_STN_CLICKED(IDC_STATIC6, &CplayvideoDlg::OnStnClickedStatic6)
 	ON_STN_CLICKED(IDC_STATIC1, &CplayvideoDlg::OnStnClickedStatic1)
+	ON_STN_CLICKED(IDC_STATIC5, &CplayvideoDlg::OnStnClickedStatic5)
+	ON_STN_CLICKED(IDC_STATIC13, &CplayvideoDlg::OnStnClickedStatic13)
+	ON_STN_CLICKED(IDC_STATIC4, &CplayvideoDlg::OnStnClickedStatic4)
+	ON_BN_CLICKED(IDC_BUTTON6, &CplayvideoDlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_RADIO1, &CplayvideoDlg::OnBnClickedRadio1)
+	ON_BN_CLICKED(IDC_RADIO2, &CplayvideoDlg::OnBnClickedRadio2)
+	ON_STN_CLICKED(IDC_STATIC8, &CplayvideoDlg::OnStnClickedStatic8)
+	ON_EN_CHANGE(IDC_EDIT3, &CplayvideoDlg::OnEnChangeEdit3)
+	//ON_LBN_SELCHANGE(IDC_LIST2, &CplayvideoDlg::OnLbnSelchangeList2)
 END_MESSAGE_MAP()
 
 
-// CplayvideoDlg ÏûÏ¢´¦Àí³ÌĞò
+// CplayvideoDlg æ¶ˆæ¯å¤„ç†ç¨‹åº
 
 BOOL CplayvideoDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// ½«¡°¹ØÓÚ...¡±²Ëµ¥ÏîÌí¼Óµ½ÏµÍ³²Ëµ¥ÖĞ¡£
+	// å°†â€œå…³äº...â€èœå•é¡¹æ·»åŠ åˆ°ç³»ç»Ÿèœå•ä¸­ã€‚
 
-	// IDM_ABOUTBOX ±ØĞëÔÚÏµÍ³ÃüÁî·¶Î§ÄÚ¡£
+	// IDM_ABOUTBOX å¿…é¡»åœ¨ç³»ç»Ÿå‘½ä»¤èŒƒå›´å†…ã€‚
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 	
@@ -207,26 +220,26 @@ BOOL CplayvideoDlg::OnInitDialog()
 		}
 	}
 
-	// ÉèÖÃ´Ë¶Ô»°¿òµÄÍ¼±ê¡£  µ±Ó¦ÓÃ³ÌĞòÖ÷´°¿Ú²»ÊÇ¶Ô»°¿òÊ±£¬¿ò¼Ü½«×Ô¶¯
-	//  Ö´ĞĞ´Ë²Ù×÷
-	SetIcon(m_hIcon, TRUE);			// ÉèÖÃ´óÍ¼±ê
-	SetIcon(m_hIcon, FALSE);		// ÉèÖÃĞ¡Í¼±ê
+	// è®¾ç½®æ­¤å¯¹è¯æ¡†çš„å›¾æ ‡ã€‚  å½“åº”ç”¨ç¨‹åºä¸»çª—å£ä¸æ˜¯å¯¹è¯æ¡†æ—¶ï¼Œæ¡†æ¶å°†è‡ªåŠ¨
+	//  æ‰§è¡Œæ­¤æ“ä½œ
+	SetIcon(m_hIcon, TRUE);			// è®¾ç½®å¤§å›¾æ ‡
+	SetIcon(m_hIcon, FALSE);		// è®¾ç½®å°å›¾æ ‡
 	detector = new Detector(cfg_file, weights_file, 0);
 	obj_names = objects_names_from_file(names_file);
-	// TODO: ÔÚ´ËÌí¼Ó¶îÍâµÄ³õÊ¼»¯´úÂë
-	pwnd = GetDlgItem(IDC_STATIC1);//·ÃÎÊ¿Ø¼şµÄID£¬¼´¿É·µ»Ø¸Ã¿Ø¼şµÄÖ¸Õë
+	// TODO: åœ¨æ­¤æ·»åŠ é¢å¤–çš„åˆå§‹åŒ–ä»£ç 
+	pwnd = GetDlgItem(IDC_STATIC1);//è®¿é—®æ§ä»¶çš„IDï¼Œå³å¯è¿”å›è¯¥æ§ä»¶çš„æŒ‡é’ˆ
 	//pwnd->MoveWindow(35,30,352,288);
-	pDC = pwnd->GetDC();//»ñÈ¡Éè±¸ÉÏÏÂÎÄ
+	pDC = pwnd->GetDC();//è·å–è®¾å¤‡ä¸Šä¸‹æ–‡
 	//pDC =GetDC();
-	hDC = pDC->GetSafeHdc();//·µ»ØÊä³öÉè±¸ÉÏÏÂÎÄµÄ¾ä±ú
-	pwnd->GetClientRect(&rect);//GetClientRectÊÇµÃµ½´°¿Ú¾ä±úµÄÓÃ»§×ø±ê¡£
+	hDC = pDC->GetSafeHdc();//è¿”å›è¾“å‡ºè®¾å¤‡ä¸Šä¸‹æ–‡çš„å¥æŸ„
+	pwnd->GetClientRect(&rect);//GetClientRectæ˜¯å¾—åˆ°çª—å£å¥æŸ„çš„ç”¨æˆ·åæ ‡ã€‚
 	pStc = (CStatic *)GetDlgItem(IDC_STATIC1);
-	m_comboWeb.AddString(_T("²âÊÔÊÓÆµ1"));
-	m_comboWeb.AddString(_T("²âÊÔÊÓÆµ2"));
-	m_comboWeb.AddString(_T("²âÊÔÊÓÆµ3"));
-	m_comboWeb.AddString(_T("²âÊÔÊÓÆµ4"));
-	m_comboWeb.AddString(_T("²âÊÔÊÓÆµ5"));
-	m_comboWeb.SetCurSel(0);
+	/*m_comboWeb.AddString(_T("æµ‹è¯•è§†é¢‘1"));
+	m_comboWeb.AddString(_T("æµ‹è¯•è§†é¢‘2"));
+	m_comboWeb.AddString(_T("æµ‹è¯•è§†é¢‘3"));
+	m_comboWeb.AddString(_T("æµ‹è¯•è§†é¢‘4"));
+	m_comboWeb.AddString(_T("æµ‹è¯•è§†é¢‘5"));
+	m_comboWeb.SetCurSel(0);*/
 	GetDlgItem(IDC_BUTTON1)->ModifyStyle(0, BS_OWNERDRAW, 0);
 	GetDlgItem(IDC_BUTTON2)->ModifyStyle(0,BS_OWNERDRAW,0);
 	GetDlgItem(IDC_BUTTON3)->ModifyStyle(0, BS_OWNERDRAW, 0);
@@ -234,6 +247,7 @@ BOOL CplayvideoDlg::OnInitDialog()
 	GetDlgItem(IDC_BUTTON6)->ModifyStyle(0, BS_OWNERDRAW, 0);
 	GetDlgItem(IDCANCEL)->ModifyStyle(0, BS_OWNERDRAW, 0);
 	GetDlgItem(IDOK)->ModifyStyle(0, BS_OWNERDRAW, 0);
+	//GetDlgItem(IDC_BUTTON6)->ModifyStyle(0, BS_OWNERDRAW, 0);
 	m_Btn1.Attach(IDC_BUTTON1, this);
 	m_Btn2.Attach(IDC_BUTTON2, this);
 	m_Btn3.Attach(IDC_BUTTON3, this);
@@ -241,7 +255,7 @@ BOOL CplayvideoDlg::OnInitDialog()
 	m_Btn5.Attach(IDC_BUTTON5, this);
 	m_Btn6.Attach(IDC_BUTTON6, this);
 	m_Btn7.Attach(IDCANCEL, this);
-	
+	//m_Btn6.Attach(IDC_BUTTON6, this);
 	//m_Btn.SetDownColor(RGB(255,0,0));
 	m_Btn1.SetUpColor(RGB(222, 156, 83));
 	m_Btn2.SetUpColor(RGB(222, 156, 83));
@@ -257,28 +271,29 @@ BOOL CplayvideoDlg::OnInitDialog()
 	m_Btn5.SetDownColor(RGB(222, 156, 83));
 	m_Btn6.SetDownColor(RGB(222, 156, 83));
 	m_Btn7.SetDownColor(RGB(222, 156, 83));
-	m_DlgRect.SetRect(0, 0, 0, 0);//³õÊ¼»¯¶Ô»°¿ò´óĞ¡´æ´¢±äÁ¿ 
-	
+	m_DlgRect.SetRect(0, 0, 0, 0);//åˆå§‹åŒ–å¯¹è¯æ¡†å¤§å°å­˜å‚¨å˜é‡ 
+	m_Radio1 = -1;
+	UpdateData(FALSE);
 	CString timeFormat1;
-	timeFormat1 = "MM/dd/yyyy   hh:mm tt";
+	timeFormat1 = "yyyy-MM-dd HH:mm ";
 	GetDlgItem(IDC_DATETIMEPICKER1)->SendMessage((UINT)DTM_SETFORMAT, (WPARAM)0, (LPARAM)
 		(LPCTSTR)timeFormat1);
 
 	CString timeFormat2;
-	timeFormat2 = "MM/dd/yyyy   hh:mm tt";
+	timeFormat2 = "yyyy-MM-dd HH:mm";
 	GetDlgItem(IDC_DATETIMEPICKER2)->SendMessage((UINT)DTM_SETFORMAT, (WPARAM)0, (LPARAM)
 		(LPCTSTR)timeFormat2);
 	
 
 	CRect rectL, rectR;
-	GetDlgItem(IDC_STATIC1)->GetWindowRect(&rectL);//»ñÈ¡¿Ø¼şÏà¶ÔÓÚÆÁÄ»µÄÎ»ÖÃ
-	ScreenToClient(rectL);//×ª»¯Îª¶Ô»°¿òÉÏµÄÏà¶ÔÎ»ÖÃ
-	m_ctrlPic.MoveWindow(rectL.left, rectL.top, 880, 495);
+	GetDlgItem(IDC_STATIC1)->GetWindowRect(&rectL);//è·å–æ§ä»¶ç›¸å¯¹äºå±å¹•çš„ä½ç½®
+	ScreenToClient(rectL);//è½¬åŒ–ä¸ºå¯¹è¯æ¡†ä¸Šçš„ç›¸å¯¹ä½ç½®
+	//m_ctrlPic.MoveWindow(rectL.left, rectL.top, 880, 495);
 	
-	try {// ´´½¨Á¬½Ó 
+	try {// åˆ›å»ºè¿æ¥ 
 		driver = get_driver_instance();
 		con = driver->connect(DATABASE_HOSTNAME, DATABASE_USERNAME, DATABASE_PWD);
-		// Á¬½Ó MySQL Êı¾İ¿â test  
+		// è¿æ¥ MySQL æ•°æ®åº“ test  
 		con->setSchema("hat");
 		
 		prep_stmt1 = con->prepareStatement(sql1);
@@ -323,20 +338,20 @@ void CplayvideoDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// Èç¹ûÏò¶Ô»°¿òÌí¼Ó×îĞ¡»¯°´Å¥£¬ÔòĞèÒªÏÂÃæµÄ´úÂë
-//  À´»æÖÆ¸ÃÍ¼±ê¡£  ¶ÔÓÚÊ¹ÓÃÎÄµµ/ÊÓÍ¼Ä£ĞÍµÄ MFC Ó¦ÓÃ³ÌĞò£¬
-//  Õâ½«ÓÉ¿ò¼Ü×Ô¶¯Íê³É¡£
+// å¦‚æœå‘å¯¹è¯æ¡†æ·»åŠ æœ€å°åŒ–æŒ‰é’®ï¼Œåˆ™éœ€è¦ä¸‹é¢çš„ä»£ç 
+//  æ¥ç»˜åˆ¶è¯¥å›¾æ ‡ã€‚  å¯¹äºä½¿ç”¨æ–‡æ¡£/è§†å›¾æ¨¡å‹çš„ MFC åº”ç”¨ç¨‹åºï¼Œ
+//  è¿™å°†ç”±æ¡†æ¶è‡ªåŠ¨å®Œæˆã€‚
 
 void CplayvideoDlg::OnPaint()
 {
 	if (IsIconic())
 	{
 		CRect   rect;
-		CPaintDC dc(this); // ÓÃÓÚ»æÖÆµÄÉè±¸ÉÏÏÂÎÄ
+		CPaintDC dc(this); // ç”¨äºç»˜åˆ¶çš„è®¾å¤‡ä¸Šä¸‹æ–‡
 		
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 		
-		// Ê¹Í¼±êÔÚ¹¤×÷Çø¾ØĞÎÖĞ¾ÓÖĞ
+		// ä½¿å›¾æ ‡åœ¨å·¥ä½œåŒºçŸ©å½¢ä¸­å±…ä¸­
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		
@@ -345,7 +360,7 @@ void CplayvideoDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// »æÖÆÍ¼±ê
+		// ç»˜åˆ¶å›¾æ ‡
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -363,8 +378,8 @@ void CplayvideoDlg::OnPaint()
 		CDialogEx::OnPaint();
 	}
 
-//µ±ÓÃ»§ÍÏ¶¯×îĞ¡»¯´°¿ÚÊ±ÏµÍ³µ÷ÓÃ´Ëº¯ÊıÈ¡µÃ¹â±ê
-//ÏÔÊ¾¡£
+//å½“ç”¨æˆ·æ‹–åŠ¨æœ€å°åŒ–çª—å£æ—¶ç³»ç»Ÿè°ƒç”¨æ­¤å‡½æ•°å–å¾—å…‰æ ‡
+//æ˜¾ç¤ºã€‚
 HCURSOR CplayvideoDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -374,7 +389,7 @@ HCURSOR CplayvideoDlg::OnQueryDragIcon()
 
 void CplayvideoDlg::OnBnClickedButton1()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	m_bRun1 = FALSE;
 	m_bRun2 = FALSE;
 	//cvReleaseCapture(&capture);
@@ -390,7 +405,7 @@ void CplayvideoDlg::OnBnClickedButton1()
 
 	if (!capture.open(0))
 	{
-		MessageBox(_T("ÎŞ·¨´ò¿ªÉãÏñÍ·"));
+		MessageBox(_T("æ— æ³•æ‰“å¼€æ‘„åƒå¤´"));
 		return;
 	}
 
@@ -426,7 +441,7 @@ void CplayvideoDlg::OnBnClickedButton1()
 		//cvWaitKey(10);
 	}
 	UpdateData(false);*/
-	// ÉèÖÃ¼ÆÊ±Æ÷,Ã¿0ms´¥·¢Ò»´ÎÊÂ¼ş
+	// è®¾ç½®è®¡æ—¶å™¨,æ¯0msè§¦å‘ä¸€æ¬¡äº‹ä»¶
 	SetTimer(1, 0, NULL);
 	AfxBeginThread((AFX_THREADPROC)ThreadFunc1, this);
 
@@ -435,7 +450,7 @@ void CplayvideoDlg::OnBnClickedButton1()
 
 void CplayvideoDlg::OnBnClickedButton2()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	//cvReleaseCapture(&capture);
 	capture.release();
 	KillTimer(1);
@@ -452,7 +467,7 @@ void CplayvideoDlg::OnBnClickedButton2()
 
 void CplayvideoDlg::OnBnClickedButton3()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	CFileDialog dlg(TRUE);
 	if (dlg.DoModal() == IDOK)
 		FileName = dlg.GetPathName();
@@ -463,7 +478,7 @@ void CplayvideoDlg::OnBnClickedButton3()
 
 void CplayvideoDlg::OnBnClickedOk()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	m_bRun1 = FALSE;
 	m_bRun2 = FALSE;
 	//IplImage* img = cvLoadImage(((LPCTSTR)FileName));
@@ -489,11 +504,11 @@ void CplayvideoDlg::OnBnClickedOk()
 	string s = (LPCSTR)(CStringA)(FileName);
 	if (!capture.open(s, cv::CAP_FFMPEG))
 	{
-		MessageBox(_T("ÇëÏÈÑ¡ÔñÊÓÆµ£¡"));
+		MessageBox(_T("è¯·å…ˆé€‰æ‹©è§†é¢‘ï¼"));
 		return;
 	}
 	SetTimer(1, 0, NULL);
-	AfxBeginThread((AFX_THREADPROC)ThreadFunc2, this);//Òì²½Ïß³Ì
+	AfxBeginThread((AFX_THREADPROC)ThreadFunc2, this);//å¼‚æ­¥çº¿ç¨‹
 	
 }
 	
@@ -502,7 +517,7 @@ void CplayvideoDlg::OnBnClickedOk()
 
 void CplayvideoDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	// TODO: ÔÚ´ËÌí¼ÓÏûÏ¢´¦Àí³ÌĞò´úÂëºÍ/»òµ÷ÓÃÄ¬ÈÏÖµ
+	// TODO: åœ¨æ­¤æ·»åŠ æ¶ˆæ¯å¤„ç†ç¨‹åºä»£ç å’Œ/æˆ–è°ƒç”¨é»˜è®¤å€¼
 	IplImage* m_Frame;
 	//m_Frame = cvQueryFrame(capture);
 	capture >> cur_frame;
@@ -528,7 +543,7 @@ void CplayvideoDlg::OnTimer(UINT_PTR nIDEvent)
 			detection_ready = false;
 			result_vec = detect_vec;
 			det_frame = cur_frame.clone();
-			AfxBeginThread((AFX_THREADPROC)ThreadFunc3, this);//Òì²½Ïß³Ì
+			AfxBeginThread((AFX_THREADPROC)ThreadFunc3, this);//å¼‚æ­¥çº¿ç¨‹
 				//if (t.joinable()) t.join();
 				//t = std::thread([&]() { detect_vec = detector->detect(det_frame, 0.24); detection_ready = true; });
 			tracker_flow.update_tracking_flow(cur_frame, result_vec); // add coords to track
@@ -576,7 +591,7 @@ void CplayvideoDlg::OnTimer(UINT_PTR nIDEvent)
 
 void CplayvideoDlg::OnBnClickedButton5()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	//cvReleaseCapture(&capture);
 	capture.release();
 	KillTimer(1);
@@ -597,9 +612,9 @@ void CplayvideoDlg::OnBnClickedButton5()
 void CplayvideoDlg::OnDtnDatetimechangeDatetimepicker1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMDATETIMECHANGE pDTChange = reinterpret_cast<LPNMDATETIMECHANGE>(pNMHDR);
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	CString timeFormat;
-	timeFormat = "MM/dd/yyyy   hh:mm:00 tt";
+	timeFormat = "yyyy-MM-dd HH:mm";
 	GetDlgItem(IDC_DATETIMEPICKER1)->SendMessage((UINT)DTM_SETFORMAT, (WPARAM)0, (LPARAM)
 		(LPCTSTR)timeFormat);
 	*pResult = 0;
@@ -608,14 +623,43 @@ void CplayvideoDlg::OnDtnDatetimechangeDatetimepicker1(NMHDR *pNMHDR, LRESULT *p
 
 void CplayvideoDlg::OnCbnSelchangeCombo1()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 }
 
 
 void CplayvideoDlg::OnBnClickedButton6()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
-	exportMySQLTable("111");
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+	if (m_Radio1 == 0)
+	{
+		CString str1, str2;
+		GetDlgItem(IDC_DATETIMEPICKER1)->GetWindowText(str1);
+		GetDlgItem(IDC_DATETIMEPICKER2)->GetWindowText(str2);
+
+	}
+	if (m_Radio1 == 1)
+	{
+		CString str;
+		GetDlgItem(IDC_COMBO1)->GetWindowText(str);
+	}
+
+
+
+
+	TCHAR szFilter[] = _T("Excelæ–‡ä»¶(*.csv) | *.csv | txtæ–‡ä»¶(*.txt) | *.txt || ");
+	//  
+	CFileDialog fileDlg(FALSE, _T("txt"), _T("my"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, this);
+	
+
+	// 
+	if (IDOK == fileDlg.DoModal())
+	{
+		//   
+		savestrFilePath = fileDlg.GetPathName();
+		AfxBeginThread((AFX_THREADPROC)exportMySQLTable, this); //SetDlgItemText(IDC_SAVE_EDIT, strFilePath);
+	}
+
+	
 
 }
 
@@ -625,12 +669,12 @@ void CplayvideoDlg::OnBnClickedButton6()
 
 void CplayvideoDlg::OnEnChangeEdit1()
 {
-	// TODO:  Èç¹û¸Ã¿Ø¼şÊÇ RICHEDIT ¿Ø¼ş£¬Ëü½«²»
-	// ·¢ËÍ´ËÍ¨Öª£¬³ı·ÇÖØĞ´ CDialogEx::OnInitDialog()
-	// º¯Êı²¢µ÷ÓÃ CRichEditCtrl().SetEventMask()£¬
-	// Í¬Ê±½« ENM_CHANGE ±êÖ¾¡°»ò¡±ÔËËãµ½ÑÚÂëÖĞ¡£
+	// TODO:  å¦‚æœè¯¥æ§ä»¶æ˜¯ RICHEDIT æ§ä»¶ï¼Œå®ƒå°†ä¸
+	// å‘é€æ­¤é€šçŸ¥ï¼Œé™¤éé‡å†™ CDialogEx::OnInitDialog()
+	// å‡½æ•°å¹¶è°ƒç”¨ CRichEditCtrl().SetEventMask()ï¼Œ
+	// åŒæ—¶å°† ENM_CHANGE æ ‡å¿—â€œæˆ–â€è¿ç®—åˆ°æ©ç ä¸­ã€‚
 
-	// TODO:  ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO:  åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 }
 
 
@@ -640,9 +684,9 @@ void CplayvideoDlg::OnEnChangeEdit1()
 void CplayvideoDlg::OnDtnDatetimechangeDatetimepicker2(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMDATETIMECHANGE pDTChange = reinterpret_cast<LPNMDATETIMECHANGE>(pNMHDR);
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	CString timeFormat;
-	timeFormat = "MM/dd/yyyy   hh:mm:00 tt";
+	timeFormat = "yyyy-MM-dd HH:mm";
 	GetDlgItem(IDC_DATETIMEPICKER2)->SendMessage((UINT)DTM_SETFORMAT, (WPARAM)0, (LPARAM)
 		(LPCTSTR)timeFormat);
 	*pResult = 0;
@@ -654,12 +698,12 @@ void CplayvideoDlg::OnDtnDatetimechangeDatetimepicker2(NMHDR *pNMHDR, LRESULT *p
 
 /*void CplayvideoDlg::OnEnChangeEdit2()
 {
-	// TODO:  Èç¹û¸Ã¿Ø¼şÊÇ RICHEDIT ¿Ø¼ş£¬Ëü½«²»
-	// ·¢ËÍ´ËÍ¨Öª£¬³ı·ÇÖØĞ´ CDialogEx::OnInitDialog()
-	// º¯Êı²¢µ÷ÓÃ CRichEditCtrl().SetEventMask()£¬
-	// Í¬Ê±½« ENM_CHANGE ±êÖ¾¡°»ò¡±ÔËËãµ½ÑÚÂëÖĞ¡£
+	// TODO:  å¦‚æœè¯¥æ§ä»¶æ˜¯ RICHEDIT æ§ä»¶ï¼Œå®ƒå°†ä¸
+	// å‘é€æ­¤é€šçŸ¥ï¼Œé™¤éé‡å†™ CDialogEx::OnInitDialog()
+	// å‡½æ•°å¹¶è°ƒç”¨ CRichEditCtrl().SetEventMask()ï¼Œ
+	// åŒæ—¶å°† ENM_CHANGE æ ‡å¿—â€œæˆ–â€è¿ç®—åˆ°æ©ç ä¸­ã€‚
 
-	// TODO:  ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO:  åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 }*/
 
 
@@ -667,10 +711,10 @@ HBRUSH CplayvideoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	// TODO:  ÔÚ´Ë¸ü¸Ä DC µÄÈÎºÎÌØĞÔ
+	// TODO:  åœ¨æ­¤æ›´æ”¹ DC çš„ä»»ä½•ç‰¹æ€§
 
 
-	if (nCtlColor == CTLCOLOR_BTN)          //¸ü¸Ä°´Å¥ÑÕÉ«  
+	if (nCtlColor == CTLCOLOR_BTN)          //æ›´æ”¹æŒ‰é’®é¢œè‰²  
 	{
 		//pDC->SetBkMode(TRANSPARENT);  
 		pDC->SetTextColor(RGB(0, 0, 0));
@@ -686,7 +730,7 @@ HBRUSH CplayvideoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		HBRUSH b=CreateSolidBrush(RGB(233, 233, 220));
 		return b;
 	}
-	else if (nCtlColor == CTLCOLOR_EDIT)   //¸ü¸Ä±à¼­¿ò  
+	else if (nCtlColor == CTLCOLOR_EDIT)   //æ›´æ”¹ç¼–è¾‘æ¡†  
 	{
 		//pDC->SetBkMode(TRANSPARENT);  
 		pDC->SetTextColor(RGB(0, 0, 0));
@@ -694,7 +738,7 @@ HBRUSH CplayvideoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		HBRUSH b=CreateSolidBrush(RGB(246, 246, 246));
 		return b;
 	}
-	else if (nCtlColor == CTLCOLOR_STATIC)  //¸ü¸Ä¾²Ì¬ÎÄ±¾  
+	else if (nCtlColor == CTLCOLOR_STATIC)  //æ›´æ”¹é™æ€æ–‡æœ¬  
 	{
 		pDC->SetTextColor(RGB(0, 0, 0));
 		if (pWnd->GetDlgCtrlID() == IDC_STATIC10 || pWnd->GetDlgCtrlID() == IDC_STATIC5)
@@ -705,7 +749,7 @@ HBRUSH CplayvideoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		HBRUSH b = CreateSolidBrush(RGB(217, 226, 241));
 		return b;
 	}
-	else if (nCtlColor == CTLCOLOR_DLG)   //¸ü¸Ä¶Ô»°¿ò±³¾°É«  
+	else if (nCtlColor == CTLCOLOR_DLG)   //æ›´æ”¹å¯¹è¯æ¡†èƒŒæ™¯è‰²  
 	{
 		pDC->SetTextColor(RGB(0, 0, 0));
 		pDC->SetBkColor(RGB(166, 254, 1));
@@ -714,18 +758,18 @@ HBRUSH CplayvideoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	}
 	
 
-	// TODO:  Èç¹ûÄ¬ÈÏµÄ²»ÊÇËùĞè»­±Ê£¬Ôò·µ»ØÁíÒ»¸ö»­±Ê
+	// TODO:  å¦‚æœé»˜è®¤çš„ä¸æ˜¯æ‰€éœ€ç”»ç¬”ï¼Œåˆ™è¿”å›å¦ä¸€ä¸ªç”»ç¬”
 	return hbr;
 }
 
-/*void CplayvideoDlg::repaint(UINT id, int last_Width, int now_Width, int last_Height, int now_Height)//¸üĞÂ¿Ø¼şÎ»ÖÃºÍ´óĞ¡º¯Êı£¬¿ÉÒÔ¸ù¾İĞèÒª×ÔĞĞĞŞ¸Ä  
+/*void CplayvideoDlg::repaint(UINT id, int last_Width, int now_Width, int last_Height, int now_Height)//æ›´æ–°æ§ä»¶ä½ç½®å’Œå¤§å°å‡½æ•°ï¼Œå¯ä»¥æ ¹æ®éœ€è¦è‡ªè¡Œä¿®æ”¹  
 {
 	CRect rect;
 	CWnd *wnd = NULL;
 	wnd = GetDlgItem(id);
 	if (NULL == wnd)
 	{
-		MessageBox(_T("ÏàÓ¦¿Ø¼ş²»´æÔÚ"));
+		MessageBox(_T("ç›¸åº”æ§ä»¶ä¸å­˜åœ¨"));
 	}
 	wnd->GetWindowRect(&rect);
 	ScreenToClient(&rect);
@@ -742,24 +786,24 @@ HBRUSH CplayvideoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 
 
-void CplayvideoDlg::repaint(UINT id, int last_Width, int now_Width, int last_Height, int now_Height)//¸üĞÂ¿Ø¼şÎ»ÖÃºÍ´óĞ¡º¯Êı£¬¿ÉÒÔ¸ù¾İĞèÒª×ÔĞĞĞŞ¸Ä  
+void CplayvideoDlg::repaint(UINT id, int last_Width, int now_Width, int last_Height, int now_Height)//æ›´æ–°æ§ä»¶ä½ç½®å’Œå¤§å°å‡½æ•°ï¼Œå¯ä»¥æ ¹æ®éœ€è¦è‡ªè¡Œä¿®æ”¹  
 {
 	//CRect rect;
 	CWnd *wnd = NULL;
 	CWnd *pwnd = NULL;
 
 	wnd = GetDlgItem(id);
-	pwnd = GetDlgItem(IDC_STATIC1);//·ÃÎÊ¿Ø¼şµÄID£¬¼´¿É·µ»Ø¸Ã¿Ø¼şµÄÖ¸Õë
+	pwnd = GetDlgItem(IDC_STATIC1);//è®¿é—®æ§ä»¶çš„IDï¼Œå³å¯è¿”å›è¯¥æ§ä»¶çš„æŒ‡é’ˆ
 
-	pDC = pwnd->GetDC();//»ñÈ¡Éè±¸ÉÏÏÂÎÄ
+	pDC = pwnd->GetDC();//è·å–è®¾å¤‡ä¸Šä¸‹æ–‡
 						//pDC =GetDC();
-	hDC = pDC->GetSafeHdc();//·µ»ØÊä³öÉè±¸ÉÏÏÂÎÄµÄ¾ä±ú
-	pwnd->GetClientRect(&rect);//GetClientRectÊÇµÃµ½´°¿Ú¾ä±úµÄÓÃ»§×ø±ê¡£
+	hDC = pDC->GetSafeHdc();//è¿”å›è¾“å‡ºè®¾å¤‡ä¸Šä¸‹æ–‡çš„å¥æŸ„
+	pwnd->GetClientRect(&rect);//GetClientRectæ˜¯å¾—åˆ°çª—å£å¥æŸ„çš„ç”¨æˆ·åæ ‡ã€‚
 	pStc = (CStatic *)GetDlgItem(IDC_STATIC1);
 
 	if (NULL == wnd)
 	{
-		MessageBox(_T("ÏàÓ¦¿Ø¼ş²»´æÔÚ"));
+		MessageBox(_T("ç›¸åº”æ§ä»¶ä¸å­˜åœ¨"));
 	}
 	wnd->GetWindowRect(&rect);
 	ScreenToClient(&rect);
@@ -790,7 +834,7 @@ void CplayvideoDlg::repaint(UINT id, int last_Width, int now_Width, int last_Hei
 
 void CplayvideoDlg::OnStnClickedStatic6()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 }
 
 void CplayvideoDlg::ThreadFunc1(void *param)
@@ -917,34 +961,34 @@ void CplayvideoDlg::OnSize(UINT nType, int cx, int cy)
 
 	// TODO: 
 	if (0 == m_DlgRect.left && 0 == m_DlgRect.right
-		&& 0 == m_DlgRect.top && 0 == m_DlgRect.bottom)//µÚÒ»´ÎÆô¶¯¶Ô»°¿òÊ±µÄ´óĞ¡±ä»¯²»×ö´¦Àí  
+		&& 0 == m_DlgRect.top && 0 == m_DlgRect.bottom)//ç¬¬ä¸€æ¬¡å¯åŠ¨å¯¹è¯æ¡†æ—¶çš„å¤§å°å˜åŒ–ä¸åšå¤„ç†  
 	{
 	}
 	else
 	{
-		if (0 == cx && 0 == cy)//Èç¹ûÊÇ°´ÏÂÁË×îĞ¡»¯£¬Ôò´¥·¢Ìõ¼ş£¬ÕâÊ±²»±£´æ¶Ô»°¿òÊı¾İ  
+		if (0 == cx && 0 == cy)//å¦‚æœæ˜¯æŒ‰ä¸‹äº†æœ€å°åŒ–ï¼Œåˆ™è§¦å‘æ¡ä»¶ï¼Œè¿™æ—¶ä¸ä¿å­˜å¯¹è¯æ¡†æ•°æ®  
 		{
 			return;
 		}
 		CRect rectDlgChangeSize;
-		GetClientRect(&rectDlgChangeSize);//´æ´¢¶Ô»°¿ò´óĞ¡¸Ä±äºó¶Ô»°¿ò´óĞ¡Êı¾İ  
+		GetClientRect(&rectDlgChangeSize);//å­˜å‚¨å¯¹è¯æ¡†å¤§å°æ”¹å˜åå¯¹è¯æ¡†å¤§å°æ•°æ®  
 
-		repaint(IDC_STATIC1, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//ÖØ»æº¯Êı£¬ÓÃÒÔ¸üĞÂ¶Ô»°¿òÉÏ¿Ø¼şµÄÎ»ÖÃºÍ´óĞ¡  
+		repaint(IDC_STATIC1, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//é‡ç»˜å‡½æ•°ï¼Œç”¨ä»¥æ›´æ–°å¯¹è¯æ¡†ä¸Šæ§ä»¶çš„ä½ç½®å’Œå¤§å°  
 		repaint(IDOK, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDCANCEL, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
-		repaint(IDC_STATIC2, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//ÖØ»æº¯Êı£¬ÓÃÒÔ¸üĞÂ¶Ô»°¿òÉÏ¿Ø¼şµÄÎ»ÖÃºÍ´óĞ¡  
+		repaint(IDC_STATIC2, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//é‡ç»˜å‡½æ•°ï¼Œç”¨ä»¥æ›´æ–°å¯¹è¯æ¡†ä¸Šæ§ä»¶çš„ä½ç½®å’Œå¤§å°  
 		repaint(IDC_STATIC3, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_STATIC4, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
-		repaint(IDC_STATIC5, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//ÖØ»æº¯Êı£¬ÓÃÒÔ¸üĞÂ¶Ô»°¿òÉÏ¿Ø¼şµÄÎ»ÖÃºÍ´óĞ¡  
+		repaint(IDC_STATIC5, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//é‡ç»˜å‡½æ•°ï¼Œç”¨ä»¥æ›´æ–°å¯¹è¯æ¡†ä¸Šæ§ä»¶çš„ä½ç½®å’Œå¤§å°  
 		repaint(IDC_STATIC11, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_STATIC12, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
-		repaint(IDC_STATIC13, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//ÖØ»æº¯Êı£¬ÓÃÒÔ¸üĞÂ¶Ô»°¿òÉÏ¿Ø¼şµÄÎ»ÖÃºÍ´óĞ¡  
+		repaint(IDC_STATIC13, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//é‡ç»˜å‡½æ•°ï¼Œç”¨ä»¥æ›´æ–°å¯¹è¯æ¡†ä¸Šæ§ä»¶çš„ä½ç½®å’Œå¤§å°  
 		repaint(IDC_STATIC6, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_STATIC8, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_STATIC10, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_BUTTON1, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_BUTTON2, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
-		repaint(IDC_BUTTON3, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//ÖØ»æº¯Êı£¬ÓÃÒÔ¸üĞÂ¶Ô»°¿òÉÏ¿Ø¼şµÄÎ»ÖÃºÍ´óĞ¡  
+		repaint(IDC_BUTTON3, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());//é‡ç»˜å‡½æ•°ï¼Œç”¨ä»¥æ›´æ–°å¯¹è¯æ¡†ä¸Šæ§ä»¶çš„ä½ç½®å’Œå¤§å°  
 		repaint(IDC_BUTTON5, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_BUTTON6, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_EDIT1, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
@@ -953,22 +997,22 @@ void CplayvideoDlg::OnSize(UINT nType, int cx, int cy)
 		repaint(IDC_COMBO1, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 		repaint(IDC_EDIT3, m_DlgRect.Width(), rectDlgChangeSize.Width(), m_DlgRect.Height(), rectDlgChangeSize.Height());
 
-		pwnd = GetDlgItem(IDC_STATIC1);//·ÃÎÊ¿Ø¼şµÄID£¬¼´¿É·µ»Ø¸Ã¿Ø¼şµÄÖ¸Õë
+		pwnd = GetDlgItem(IDC_STATIC1);//è®¿é—®æ§ä»¶çš„IDï¼Œå³å¯è¿”å›è¯¥æ§ä»¶çš„æŒ‡é’ˆ
 
-		pDC = pwnd->GetDC();//»ñÈ¡Éè±¸ÉÏÏÂÎÄ
+		pDC = pwnd->GetDC();//è·å–è®¾å¤‡ä¸Šä¸‹æ–‡
 							//pDC =GetDC();
-		hDC = pDC->GetSafeHdc();//·µ»ØÊä³öÉè±¸ÉÏÏÂÎÄµÄ¾ä±ú
-		pwnd->GetClientRect(&rect);//GetClientRectÊÇµÃµ½´°¿Ú¾ä±úµÄÓÃ»§×ø±ê¡£
+		hDC = pDC->GetSafeHdc();//è¿”å›è¾“å‡ºè®¾å¤‡ä¸Šä¸‹æ–‡çš„å¥æŸ„
+		pwnd->GetClientRect(&rect);//GetClientRectæ˜¯å¾—åˆ°çª—å£å¥æŸ„çš„ç”¨æˆ·åæ ‡ã€‚
 		pStc = (CStatic *)GetDlgItem(IDC_STATIC1);
 
 		/*CRect  rectL;
 		CWnd *wnd = NULL;
-		GetDlgItem(IDC_STATIC1)->GetWindowRect(&rectL);//»ñÈ¡¿Ø¼şÏà¶ÔÓÚÆÁÄ»µÄÎ»ÖÃ
-		ScreenToClient(rectL);//×ª»¯Îª¶Ô»°¿òÉÏµÄÏà¶ÔÎ»ÖÃ
+		GetDlgItem(IDC_STATIC1)->GetWindowRect(&rectL);//è·å–æ§ä»¶ç›¸å¯¹äºå±å¹•çš„ä½ç½®
+		ScreenToClient(rectL);//è½¬åŒ–ä¸ºå¯¹è¯æ¡†ä¸Šçš„ç›¸å¯¹ä½ç½®
 		int height;
 		int width;
-		height = rectL.bottom - rectL.top;//heightÎªbuttonµÄ¸ß
-		width = rectL.right - rectL.left;//widthÎªbuttonµÄ¿í
+		height = rectL.bottom - rectL.top;//heightä¸ºbuttonçš„é«˜
+		width = rectL.right - rectL.left;//widthä¸ºbuttonçš„å®½
 
 
 
@@ -984,7 +1028,7 @@ void CplayvideoDlg::OnSize(UINT nType, int cx, int cy)
 
 	}
 	GetClientRect(&m_DlgRect); //save size of dialog  
-	Invalidate();//¸üĞÂ´°¿Ú 
+	Invalidate();//æ›´æ–°çª—å£ 
 
 
 	
@@ -993,13 +1037,13 @@ void CplayvideoDlg::AddPitcure()
 {
 
 	CBitmap bitmap;
-	//¼ÓÔØÖ¸¶¨Î»Í¼×ÊÔ´ BmpÍ¼Æ¬ID    
+	//åŠ è½½æŒ‡å®šä½å›¾èµ„æº Bmpå›¾ç‰‡ID    
 	bitmap.LoadBitmap(IDB_BITMAP1);
-	//»ñÈ¡¶Ô»°¿òÉÏµÄ¾ä±ú Í¼Æ¬¿Ø¼şID    
+	//è·å–å¯¹è¯æ¡†ä¸Šçš„å¥æŸ„ å›¾ç‰‡æ§ä»¶ID    
 	CStatic *p = (CStatic *)GetDlgItem(IDC_STATIC1);
-	//ÉèÖÃ¾²Ì¬¿Ø¼ş´°¿Ú·ç¸ñÎªÎ»Í¼¾ÓÖĞÏÔÊ¾     
+	//è®¾ç½®é™æ€æ§ä»¶çª—å£é£æ ¼ä¸ºä½å›¾å±…ä¸­æ˜¾ç¤º     
 	p->ModifyStyle(0xf, SS_BITMAP | SS_CENTERIMAGE);
-	//½«Í¼Æ¬ÉèÖÃµ½Picture¿Ø¼şÉÏ    
+	//å°†å›¾ç‰‡è®¾ç½®åˆ°Pictureæ§ä»¶ä¸Š    
 	p->SetBitmap(bitmap);
 
 	BITMAP bmpInfo;
@@ -1021,7 +1065,7 @@ void CplayvideoDlg::AddPitcure()
 
 void CplayvideoDlg::OnStnClickedStatic1()
 {
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 }
 void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std::string> obj_names,
 	int current_det_fps = -1, int current_cap_fps = -1)
@@ -1055,45 +1099,199 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 	//std::cout << "object names loaded \n";
 	return file_lines;
 }
-void exportMySQLTable(string file) 
-{
-	
-	// sql_row;
 
-	int  num;
-	//FILE * output = fopen(file.data, "w+");
-	FILE * output;
-	try { 
-		output = fopen("123.csv", "w+"); 
+
+void CplayvideoDlg:: exportMySQLTable(void *param)
+{
+	CplayvideoDlg  *dlg = (CplayvideoDlg  *)param;
+	if (dlg->m_Radio1 == 1) {
+		// sql_row;
+		CString str,str2;
+		dlg->GetDlgItem(IDC_COMBO1)->GetWindowText(str);
+		//string base_query = "select * from `";
+		//string sql_query = base_query + table + "`";
+		//string output_file = table + ".csv";
+		int  num;
+		//FILE * output = fopen(file.data, "w+");
+		FILE * output;
+		try {
+			output = fopen((LPCSTR)savestrFilePath, "w+");
+		}
+		catch (exception e) {
+			return;
+		}
+		sql::ResultSet * res2;
+		try {
+			prep_stmt4->setString(1, (LPCSTR)(str));
+			int indexoftable;
+			res = prep_stmt4->executeQuery();
+
+			while (res->next())
+			{
+				indexoftable = res->getInt(1);
+
+			}
+			str.Format(_T("select * from n%d"), indexoftable);
+			stm2 = con->createStatement();
+			res2 = stm2->executeQuery((LPCSTR)(CStringA)(str2));//query
+			res2->next();
+			//sql::ResultSetMetaData metaData = res2->getMetaData();
+			num = res2->getMetaData()->getColumnCount();
+			for (int j = 1; j <= num; j++)
+			{
+
+				fprintf(output, "%s,", res2->getMetaData()->getColumnName(j));
+			}
+			fprintf(output, "\n");
+			while (res2->next())// get row info
+			{
+				num = res2->getMetaData()->getColumnCount();
+				for (int j = 1; j <= num; j++)
+				{
+
+					fprintf(output, "%s,", res2->getString(j));
+					
+				}
+				fprintf(output, "\n");
+
+			}
+			fclose(output);
+			dlg->MessageBox(_T("å¯¼å‡ºæˆåŠŸï¼"));
+			return;
+		}
+
+		catch (sql::SQLException e) {
+			fclose(output);
+		}
+		/*if (res == NULL)
+			return;*/
 	}
-	catch (exception e) {
+	else if(dlg->m_Radio1==0)
+	{
+		CString str1, str2;
+		dlg->GetDlgItem(IDC_DATETIMEPICKER1)->GetWindowText(str1);
+		dlg->GetDlgItem(IDC_DATETIMEPICKER2)->GetWindowText(str2);
+		// sql_row;
+		string base_query1 = "select * from result where  time >='";
+		string base_query2 = "'and time <='";
+		//string sql_query = base_query + table + "`";
+		//string output_file = table + ".csv";
+		int  num;
+		//FILE * output = fopen(file.data, "w+");
+		FILE * output;
+		try {
+			output = fopen((LPCSTR)savestrFilePath, "w+");
+		}
+		catch (exception e) {
+			return;
+		}
+		sql::ResultSet * res2;
+		try {
+			stm2 = con->createStatement();
+			res2 = stm2->executeQuery(base_query1+ (LPCSTR)str1+ base_query2+(LPCSTR)str2+"'");//query
+			res2->next();
+			//sql::ResultSetMetaData metaData = res2->getMetaData();
+			num = res2->getMetaData()->getColumnCount();
+			for (int j = 1; j <= num; j++)
+			{
+
+				fprintf(output, "%s,", res2->getMetaData()->getColumnName(j));
+			}
+			fprintf(output, "\n");
+			while (res2->next())// get row info
+			{
+				num = res2->getMetaData()->getColumnCount();
+				for (int j = 1; j <= num; j++)
+				{
+
+					fprintf(output, "%s,", res2->getString(j));
+				}
+				fprintf(output, "\n");
+
+			}
+			fclose(output);
+			dlg->MessageBox(_T("å¯¼å‡ºæˆåŠŸï¼"));
+			return;
+		}
+
+		catch (sql::SQLException e) {
+			fclose(output);
+		}
+		/*if (res == NULL)
+		return;*/
+	}
+	else {
+		dlg->MessageBox(_T("è¯·å…ˆé€‰æ‹©æ¡ä»¶ï¼"));
 		return;
 	}
-	try {
-		sql::ResultSet * res = stm->executeQuery("SELECT * FROM  (n00001);");//query
-	}
-	
-	catch (sql::SQLException e) {
+}
 
-	}
-	/*if (res == NULL)
-		return;*/
-	while (res->next())// get row info
+
+
+
+void CplayvideoDlg::OnStnClickedStatic5()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+}
+
+
+void CplayvideoDlg::OnStnClickedStatic13()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+}
+
+
+void CplayvideoDlg::OnStnClickedStatic4()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+}
+
+
+void CplayvideoDlg::OnBnClickedRadio1()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+	m_Radio1 = 0;
+	if (m_Radio1 == 0)
 	{
-		num = res->getMetaData()->getColumnCount();
-		for (int j = 1; j <= num; j++)
-		{
-			
-			fprintf(output, "%s,", res->getString(j));
-		}
-	
-	
-	}
-			
-	
-	
-	
 
-	fclose(output);
-	
+		GetDlgItem(IDC_DATETIMEPICKER1)->EnableWindow(true);
+		GetDlgItem(IDC_DATETIMEPICKER2)->EnableWindow(true);
+		GetDlgItem(IDC_COMBO1)->EnableWindow(false);
+	}
+}
+
+
+void CplayvideoDlg::OnBnClickedRadio2()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+	m_Radio1 = 1;
+	if (m_Radio1 == 1)
+	{
+		GetDlgItem(IDC_COMBO1)->EnableWindow(true);
+		GetDlgItem(IDC_DATETIMEPICKER1)->EnableWindow(false);
+		GetDlgItem(IDC_DATETIMEPICKER2)->EnableWindow(false);
+	}
+}
+
+
+void CplayvideoDlg::OnStnClickedStatic8()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+}
+
+
+void CplayvideoDlg::OnEnChangeEdit3()
+{
+	// TODO:  å¦‚æœè¯¥æ§ä»¶æ˜¯ RICHEDIT æ§ä»¶ï¼Œå®ƒå°†ä¸
+	// å‘é€æ­¤é€šçŸ¥ï¼Œé™¤éé‡å†™ CDialogEx::OnInitDialog()
+	// å‡½æ•°å¹¶è°ƒç”¨ CRichEditCtrl().SetEventMask()ï¼Œ
+	// åŒæ—¶å°† ENM_CHANGE æ ‡å¿—â€œæˆ–â€è¿ç®—åˆ°æ©ç ä¸­ã€‚
+
+	// TODO:  åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
+}
+
+
+void CplayvideoDlg::OnLbnSelchangeList2()
+{
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 }
