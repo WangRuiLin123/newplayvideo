@@ -1,7 +1,8 @@
 ﻿
 // playvideoDlg.cpp : 实现文件
 //
-
+#include < iostream >  
+#include < fstream >  
 #include <thread>  
 #include <time.h>
 #include "stdafx.h"
@@ -1131,9 +1132,10 @@ void CplayvideoDlg:: exportMySQLTable(void *param)
 				indexoftable = res->getInt(1);
 
 			}
-			str.Format(_T("select * from n%d"), indexoftable);
-			stm2 = con->createStatement();
-			res2 = stm2->executeQuery((LPCSTR)(CStringA)(str2));//query
+			//indexoftable = 00001;
+			str2.Format(_T("select * from n%.5d;"), indexoftable);
+			//stm2 = con->createStatement();
+			res2 = stm->executeQuery((LPCSTR)(CStringA)(str2));//query
 			res2->next();
 			//sql::ResultSetMetaData metaData = res2->getMetaData();
 			num = res2->getMetaData()->getColumnCount();
@@ -1178,44 +1180,54 @@ void CplayvideoDlg:: exportMySQLTable(void *param)
 		//string output_file = table + ".csv";
 		int  num;
 		//FILE * output = fopen(file.data, "w+");
-		FILE * output;
+		//FILE * output;
+		ofstream fout;
 		try {
-			output = fopen((LPCSTR)savestrFilePath, "w+");
+			//output = fopen((LPCSTR)savestrFilePath, "w+");
+			fout.open((LPCSTR)savestrFilePath,'w');
 		}
 		catch (exception e) {
 			return;
 		}
 		sql::ResultSet * res2;
 		try {
-			stm2 = con->createStatement();
-			res2 = stm2->executeQuery(base_query1+ (LPCSTR)str1+ base_query2+(LPCSTR)str2+"'");//query
+			//stm2 = con->createStatement();
+			res2 = stm->executeQuery(base_query1 + (LPCSTR)str1 + base_query2 + (LPCSTR)str2 + "';");//query
 			res2->next();
 			//sql::ResultSetMetaData metaData = res2->getMetaData();
 			num = res2->getMetaData()->getColumnCount();
 			for (int j = 1; j <= num; j++)
 			{
 
-				fprintf(output, "%s,", res2->getMetaData()->getColumnName(j));
+				//fprintf(output, "%s,", res2->getMetaData()->getColumnName(j));
+				fout << res2->getMetaData()->getColumnName(j)<<',';
+				
 			}
-			fprintf(output, "\n");
+			//fprintf(output, "\n");
+			fout << '\n';
 			while (res2->next())// get row info
 			{
 				num = res2->getMetaData()->getColumnCount();
 				for (int j = 1; j <= num; j++)
 				{
-
-					fprintf(output, "%s,", res2->getString(j));
+					string s = res2->getString(j);
+					//fprintf(output, "%s,", s);
+					fout << s<<',';
+					
 				}
-				fprintf(output, "\n");
+				//fprintf(output, "\n");
+				fout << '\n';
 
 			}
-			fclose(output);
+			//fclose(output);
+			fout.close();
 			dlg->MessageBox(_T("导出成功！"));
 			return;
 		}
 
 		catch (sql::SQLException e) {
-			fclose(output);
+			//fclose(output);
+			fout.close();
 		}
 		/*if (res == NULL)
 		return;*/
